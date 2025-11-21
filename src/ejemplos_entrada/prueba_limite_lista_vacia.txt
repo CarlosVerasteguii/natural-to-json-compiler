@@ -1,0 +1,1 @@
+CREAR LISTA listaVacia CON ELEMENTOS

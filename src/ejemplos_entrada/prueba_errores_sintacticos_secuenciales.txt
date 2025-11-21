@@ -1,0 +1,10 @@
+// prueba_errores_sintacticos_secuenciales.txt
+CREAR OBJETO objetoValido1 CON clave1:"valor1", clave2:100
+
+CREAR LISTA listaConError CON ELEMENTOS "item1" "item2" // Error: Falta coma entre item1 e item2
+
+CREAR OBJETO objetoValido2 CON otraClave:VERDADERO // Este debería parsearse bien si ANTLR se recupera
+
+CREAR OBJETO objetoConError CON llaveSinValor: // Error: Falta valor después de :
+
+CREAR LISTA listaValidaFinal CON ELEMENTOS 99, "fin"

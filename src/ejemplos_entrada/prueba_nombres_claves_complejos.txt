@@ -1,0 +1,2 @@
+CREAR OBJETO _miObjeto123 CON _clave_AÑO_2023:"Valor con ñandú y acentuación"
+CREAR LISTA _lista_Ñañu_1 CON ELEMENTOS VERDADERO, FALSO, 100

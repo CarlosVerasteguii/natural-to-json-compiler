@@ -1,0 +1,1 @@
+CREAR OBJETO miLibro CON titulo:"El Gran Libro de Ñandú", año:2023, disponible:VERDADERO

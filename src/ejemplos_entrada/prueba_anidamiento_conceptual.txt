@@ -1,0 +1,5 @@
+// prueba_anidamiento_conceptual.txt
+CREAR OBJETO autorPrincipal CON nombre:"Gabriel García Márquez", nacionalidad:"Colombiano", añoNacimiento:1927
+CREAR LISTA obrasGabo CON ELEMENTOS "Cien años de soledad", "El amor en los tiempos del cólera", "Crónica de una muerte anunciada"
+CREAR OBJETO libroDetallado CON titulo:"Cien años de soledad", publicacion:1967, genero:"Realismo Mágico", autorRef:"autorPrincipal", disponible:VERDADERO
+CREAR OBJETO editorial CON nombre:"Sudamericana", ciudad:"Buenos Aires"

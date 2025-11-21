@@ -1,0 +1,2 @@
+CREAR OBJETO datos CON textoVacio:"", numeroCero:0, decimalCero:0.0, negativoDecimal:-0.001
+CREAR LISTA masNumeros CON ELEMENTOS -1, 1.0

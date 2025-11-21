@@ -1,0 +1,6 @@
+CREAR OBJETO obj_err_sintax CON llave1 "valor1" // Falta :
+CREAR OBJETO obj_err_sintax2 CON llave2: // Falta valor
+CREAR LISTA lista_err_sintax CON ELEMENTOS 1 2 3 // Faltan comas
+CREAR LISTA lista_err_sintax2 CON ELEMENTOS 1, ,3 // Coma extra o elemento faltante
+OBJETO obj_sin_crear CON k:"v" // Falta CREAR
+CREAR OBJETO mi_obj CON nombre:"Ana" apellido:"Perez" // Falta coma entre propiedades

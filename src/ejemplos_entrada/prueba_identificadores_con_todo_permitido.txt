@@ -1,0 +1,8 @@
+// prueba_identificadores_con_todo_permitido.txt
+CREAR OBJETO _Objeto_Con_Ñandú_Y_Acentuación_123 CON
+    _clave_Número_1: "Valor_1",
+    descripciónAño2023: "Descripción del año con ñ y acentos.",
+    MAYÚSCULAS_Y_números_007: VERDADERO,
+    __dobleGuionBajo__: 123.456,
+    letraÑinicio: "Sí, con Ñ"
+CREAR LISTA _LISTA_Acentuada_Ñ CON ELEMENTOS _Objeto_Con_Ñandú_Y_Acentuación_123 // Ojo: esto es un IDENTIFICADOR, no el objeto en sí

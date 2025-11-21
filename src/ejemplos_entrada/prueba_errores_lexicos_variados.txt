@@ -1,0 +1,3 @@
+CREAR OBJETO obj_err_lex CON llave#1:"valor" // Error con #
+CREAR LISTA lista_err_lex CON ELEMENTOS 1, % , 3 // Error con %
+CREAR OBJETO otro_err CON exclamacion! : FALSO

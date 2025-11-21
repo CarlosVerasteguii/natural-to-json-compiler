@@ -1,0 +1,1 @@
+CREAR OBJETO pruebaError CON clave_con_@char:"valor" // Error léxico @

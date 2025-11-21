@@ -1,0 +1,14 @@
+// Archivo de prueba con formato variado
+CREAR    OBJETO   primerObjeto    CON    nombre : "Objeto Uno" ,    id : 1 // Fin obj1
+
+// Definiendo una lista ahora
+CREAR LISTA   primeraLista CON   ELEMENTOS   "itemA"   ,   "itemB"  ,VERDADERO
+
+CREAR OBJETO segundoObjeto   // Comentario en medio del comando (no permitido por la gramática actual, debería dar error)
+    CON llave :"valor" // Esto sí es válido si la línea anterior no da error léxico/sintáctico primero
+
+CREAR LISTA segundaLista   CON   ELEMENTOS   // Lista con elementos en líneas separadas (válido)
+    100,
+    200.5, // Coma al final de la línea
+    FALSO
+    // Comentario final

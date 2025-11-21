@@ -1,0 +1,2 @@
+CREAR OBJETO datosPersonales CON nombre:"Carlos Verastegui", ciudad:"Tampico", edad:25
+CREAR LISTA coordenadas CON ELEMENTOS 12.5, -8.3, 40

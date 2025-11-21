@@ -1,0 +1,12 @@
+{
+  "datosPersonales": {
+    "nombre": "Carlos Verastegui",
+    "ciudad": "Tampico",
+    "edad": 25
+  },
+  "coordenadas": [
+    12.5,
+    -8.3,
+    40
+  ]
+}

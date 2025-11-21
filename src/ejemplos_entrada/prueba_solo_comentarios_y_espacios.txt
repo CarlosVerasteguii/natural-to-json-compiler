@@ -1,0 +1,4 @@
+// Esto es solo un comentario
+// Otra línea de comentario
+
+// Fin del archivo

@@ -1,0 +1,1 @@
+CREAR OBJETO miObjeto CON titulo // Falta : y valor

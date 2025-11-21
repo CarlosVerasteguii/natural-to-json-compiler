@@ -1,0 +1,4 @@
+CREAR OBJETO obj1 CON k1:"v1"
+CREAR LISTA lista1 CON ELEMENTOS 1,2,3
+CREAR OBJETO obj2 CON k2:VERDADERO, k3:-0.5
+CREAR OBJETO obj3 CON k_ñ:"ñ" // Comentario al final de línea

@@ -1,0 +1,38 @@
+// prueba_todo_junto_maxima_carga.txt
+
+CREAR OBJETO sistema_Configuracion CON
+    nombre_App: "NaturalToJSON Pro",
+    version_Actual: "1.0.5", // Versión del software
+    modo_Depuracion: FALSO,
+    puerto_Servidor: 8080,
+    limite_Conexiones: 1000,
+    path_logs: "/var/log/naturaltojson/",
+    factor_Conversion_Decimal: 12.3456789
+// Fin de la configuración principal
+
+CREAR LISTA usuarios_Activos CON ELEMENTOS
+    "usuario_Alfa",
+    "beta_Tester_002",
+    "gamma_User_Ñ",
+    "delta_Con_Acento_ó"
+
+CREAR OBJETO _PERFIL_Detallado_1 CON
+    ID_Interno: "_u_alfa_001",
+    nombreCompleto: "Alfa González Pérez",
+    edad_Usuario: 33,
+    esAdministrador: VERDADERO,
+    ultimo_Acceso: "2025-05-12T10:30:00Z", // String
+    preferencias_Notificaciones: FALSO,
+    saldo_Cuenta: -25.50
+// Comentario extenso para probar el ignorado
+// Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+// Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+CREAR LISTA _coleccion_numerica_grande CON ELEMENTOS
+1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+100.1, 200.2, 300.3, -400.4, -0.0005,
+0, 1, VERDADERO, FALSO, "mezcla" // Lista con tipos mixtos
+
+CREAR OBJETO objeto_Final_Test CON
+    mensaje: "Prueba de carga completada.",
+    estado_OK: VERDADERO

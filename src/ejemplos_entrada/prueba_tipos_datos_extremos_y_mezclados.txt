@@ -1,0 +1,3 @@
+// prueba_tipos_datos_extremos_y_mezclados.txt
+CREAR OBJETO valoresExtremos CON enteroGrande:9876543210, decimalLargo:-0.00000000123, textoLargo:"Este es un string que contiene muchos caracteres y también números 12345 y símbolos como !#$ y la letra ñ para probar la capacidad del analizador.", booleanoMayus:VERDADERO, booleanoMinus:falso
+CREAR LISTA mezclaRara CON ELEMENTOS "PrimerElementoEsUnString", -1, 0.0, VERDADERO, "Otro String", 999.999, FALSO, "" // String vacío en la lista
