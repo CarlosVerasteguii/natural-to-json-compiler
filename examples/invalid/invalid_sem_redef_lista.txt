@@ -1,0 +1,2 @@
+CREAR LISTA colores CON ELEMENTOS "Rojo", "Verde"
+CREAR LISTA colores CON ELEMENTOS "Azul"

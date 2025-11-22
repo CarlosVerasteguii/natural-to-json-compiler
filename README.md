@@ -12,13 +12,13 @@ Este proyecto extiende el trabajo de Compiladores 1 y está diseñado para incor
 
 * **Materia:** Compiladores 2
 * **Institución:** Universidad Autónoma de Tamaulipas
-* **Semestre:** 2025-1
-* **Profesor:** Dante Adolfo
+* **Semestre:** 2025-2
+* **Profesor:** Dante Adolfo Muñoz Quintero
 
 ## Integrantes del Equipo
 
 * Carlos - [Código Estudiante]
-* [Nombre Completo 2] - [Código Estudiante]
+* Roberto - [Código Estudiante]
 
 ## Estructura del Proyecto
 

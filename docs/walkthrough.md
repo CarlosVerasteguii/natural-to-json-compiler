@@ -144,7 +144,10 @@ para comenzar la **Unidad 1: Análisis Semántico**.
 
 ### Verificación
 - [x] `python tests/test_basic.py` sigue pasando (sin regresiones).
-- [x] Pruebas manuales confirmaron que la redefinición de símbolos bloquea la salida JSON y reporta el error correctamente.
+- [x] **NUEVO**: Se creó `tests/test_semantic.py` para verificar errores semánticos.
+    - **SEM001 (Redefinición)**: Verificado exitosamente (bloquea JSON).
+    - **SEM002 (Palabras Reservadas)**: Verificado que el uso de palabras clave como identificadores bloquea la generación de JSON (aunque actualmente es detectado como error sintáctico por la precedencia del parser).
+- [x] Se añadieron 4 archivos de prueba inválidos en `examples/invalid/` cubriendo estos casos.
 
 ### Siguientes Pasos
 - **Paso 2:** Implementar Chequeo de Tipos (Unit 1, Step 2).

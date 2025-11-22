@@ -8,3 +8,5 @@ __pycache__/
 *.swp
 *.swo
 
+# Archivo local de notas de chat (no versionar)
+docs/chat_context_notas.md

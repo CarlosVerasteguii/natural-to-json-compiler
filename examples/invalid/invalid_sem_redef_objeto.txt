@@ -1,0 +1,2 @@
+CREAR OBJETO usuario CON nombre:"Juan"
+CREAR OBJETO usuario CON nombre:"Pedro"
