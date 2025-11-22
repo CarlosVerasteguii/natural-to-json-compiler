@@ -1,0 +1,10 @@
+# Archivos de configuración locales / herramientas externas
+*.resolved
+
+# Archivos de entorno/editor comunes (puedes ampliar esta lista si lo deseas)
+*.pyc
+__pycache__/
+.DS_Store
+*.swp
+*.swo
+
