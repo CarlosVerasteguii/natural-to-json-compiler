@@ -174,3 +174,23 @@ La IR consiste en una lista de objetos `IRInstruction`, cada uno con un `opcode`
 
 ### Generación
 La IR se genera automáticamente durante el proceso de análisis (`analyze_and_transform`) si no hay errores semánticos. Se encuentra disponible en el diccionario `stats` bajo la clave `"ir"`.
+
+## Unidad 3: Generación de Código Final
+
+Se ha implementado el backend del compilador, que toma la Representación Intermedia (IR) y genera código Python ejecutable.
+
+### Características
+*   **Lenguaje Objetivo:** Python.
+*   **Estrategia:** Script lineal con variables globales.
+*   **Mapeo:**
+    *   Objetos -> Diccionarios de Python (`{}`).
+    *   Listas -> Listas de Python (`[]`).
+    *   Tipos -> Literales nativos de Python (`str`, `int/float`, `bool`).
+
+### Implementación
+*   `src/codegen.py`: Contiene la lógica de generación (`generate_python_from_ir`) y formateo de valores (`format_value`).
+*   `tests/test_codegen.py`: Verifica que el código generado produce las estructuras de datos esperadas al ejecutarse.
+
+### Verificación
+*   [x] `python tests/test_codegen.py`: Verifica la generación correcta para objetos, listas y casos mixtos.
+*   [x] Todos los tests anteriores (`basic`, `semantic`, `types`, `ir`) siguen pasando sin regresiones.
