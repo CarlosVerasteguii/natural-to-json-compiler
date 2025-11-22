@@ -158,3 +158,19 @@ para comenzar la **Unidad 1: Análisis Semántico**.
 A partir de este punto, cualquier cambio en el compilador deberá mantener
 `python tests/test_basic.py` en estado `OK` para asegurar que no se rompa la
 funcionalidad de análisis léxico/sintáctico ni la generación actual de JSON.
+
+## Unidad 2: Representación Intermedia (IR)
+
+Se ha implementado una Representación Intermedia (IR) lineal que abstrae la estructura del AST en una lista de instrucciones secuenciales. Esto facilita la optimización y la generación de código para diferentes backends.
+
+### Estructura de la IR
+La IR consiste en una lista de objetos `IRInstruction`, cada uno con un `opcode` y una lista de `args`.
+
+**Instrucciones soportadas:**
+*   `IR_CREATE_OBJECT`: Crea un nuevo objeto. Args: `[nombre_objeto]`
+*   `IR_SET_PROPERTY`: Asigna una propiedad a un objeto. Args: `[nombre_objeto, clave, tipo, valor]`
+*   `IR_CREATE_LIST`: Crea una nueva lista. Args: `[nombre_lista]`
+*   `IR_APPEND_LIST`: Agrega un elemento a una lista. Args: `[nombre_lista, tipo, valor]`
+
+### Generación
+La IR se genera automáticamente durante el proceso de análisis (`analyze_and_transform`) si no hay errores semánticos. Se encuentra disponible en el diccionario `stats` bajo la clave `"ir"`.

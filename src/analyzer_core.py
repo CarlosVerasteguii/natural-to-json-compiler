@@ -336,6 +336,96 @@ class SemanticAnalyzer(NaturalToJsonListener):
                  entry.metadatos["tipos_elementos"].append(tipo_valor)
 
 
+# --- Estructuras para Representación Intermedia (IR) ---
+
+class IRInstruction:
+    """
+    Representa una instrucción de la Representación Intermedia (IR).
+    """
+    def __init__(self, opcode, args):
+        self.opcode = opcode
+        self.args = args
+
+    def to_dict(self):
+        return {"opcode": self.opcode, "args": self.args}
+
+class IRBuilderListener(NaturalToJsonListener):
+    """
+    Listener que construye la Representación Intermedia (IR) a partir del AST.
+    Genera una lista lineal de instrucciones.
+    """
+    def __init__(self):
+        self.ir_instructions = []
+        self.current_obj_name = None
+        self.current_list_name = None
+
+    def get_instructions(self):
+        return [instr.to_dict() for instr in self.ir_instructions]
+
+    def enterCrear_objeto_cmd(self, ctx:NaturalToJsonParser.Crear_objeto_cmdContext):
+        nombre = ctx.nombre_obj.text
+        self.current_obj_name = nombre
+        self.ir_instructions.append(IRInstruction("IR_CREATE_OBJECT", [nombre]))
+
+    def exitCrear_objeto_cmd(self, ctx:NaturalToJsonParser.Crear_objeto_cmdContext):
+        self.current_obj_name = None
+
+    def exitPropiedad(self, ctx:NaturalToJsonParser.PropiedadContext):
+        if self.current_obj_name:
+            clave = ctx.clave.text
+            valor_ctx = ctx.valor()
+            tipo_valor = get_value_type(valor_ctx)
+            
+            # Extraer valor nativo de Python
+            valor_nativo = None
+            if valor_ctx.STRING():
+                valor_nativo = valor_ctx.STRING().getText()[1:-1]
+            elif valor_ctx.NUMERO_ENTERO():
+                valor_nativo = int(valor_ctx.NUMERO_ENTERO().getText())
+            elif valor_ctx.NUMERO_DECIMAL():
+                valor_nativo = float(valor_ctx.NUMERO_DECIMAL().getText())
+            elif valor_ctx.KW_VERDADERO():
+                valor_nativo = True
+            elif valor_ctx.KW_FALSO():
+                valor_nativo = False
+            
+            self.ir_instructions.append(IRInstruction(
+                "IR_SET_PROPERTY", 
+                [self.current_obj_name, clave, tipo_valor, valor_nativo]
+            ))
+
+    def enterCrear_lista_cmd(self, ctx:NaturalToJsonParser.Crear_lista_cmdContext):
+        nombre = ctx.nombre_lista.text
+        self.current_list_name = nombre
+        self.ir_instructions.append(IRInstruction("IR_CREATE_LIST", [nombre]))
+
+    def exitCrear_lista_cmd(self, ctx:NaturalToJsonParser.Crear_lista_cmdContext):
+        self.current_list_name = None
+
+    def exitValor(self, ctx:NaturalToJsonParser.ValorContext):
+        # Verificar si estamos dentro de una lista
+        # El padre de un valor en una lista es Items_listaContext
+        if self.current_list_name and isinstance(ctx.parentCtx, NaturalToJsonParser.Items_listaContext):
+            tipo_valor = get_value_type(ctx)
+            
+            # Extraer valor nativo
+            valor_nativo = None
+            if ctx.STRING():
+                valor_nativo = ctx.STRING().getText()[1:-1]
+            elif ctx.NUMERO_ENTERO():
+                valor_nativo = int(ctx.NUMERO_ENTERO().getText())
+            elif ctx.NUMERO_DECIMAL():
+                valor_nativo = float(ctx.NUMERO_DECIMAL().getText())
+            elif ctx.KW_VERDADERO():
+                valor_nativo = True
+            elif ctx.KW_FALSO():
+                valor_nativo = False
+            
+            self.ir_instructions.append(IRInstruction(
+                "IR_APPEND_LIST",
+                [self.current_list_name, tipo_valor, valor_nativo]
+            ))
+
 # --- Listener para Construir JSON ---
 class JsonBuilderListener(NaturalToJsonListener):
     """
@@ -610,6 +700,7 @@ def analyze_and_transform(source_name, input_content):
     json_output_string = None
     num_comandos = 0
     symbols_debug_info = {} # Información de depuración de la tabla de símbolos
+    ir_output = [] # Representación Intermedia
     
     # 1. Verificar errores léxicos y sintácticos
     if error_listener.get_total_errors() == 0 and tree:
@@ -622,7 +713,14 @@ def analyze_and_transform(source_name, input_content):
         # Capturar información de depuración de la tabla de símbolos
         symbols_debug_info = symbol_table.get_debug_info()
 
-        # 3. Generación de JSON (Solo si no hay errores semánticos)
+        # 3. Generación de IR (NUEVO - Unidad 2)
+        # Solo si no hay errores semánticos
+        if error_listener.semantic_errors == 0:
+            ir_builder = IRBuilderListener()
+            walker.walk(ir_builder, tree)
+            ir_output = ir_builder.get_instructions()
+
+        # 4. Generación de JSON (Solo si no hay errores semánticos)
         if error_listener.semantic_errors == 0:
             # Construir el modelo para QTreeView
             model_builder = ParseTreeModelBuilder(list(NaturalToJsonParser.ruleNames))
@@ -638,7 +736,7 @@ def analyze_and_transform(source_name, input_content):
             # Generar representación textual del árbol (estilo LISP)
             try:
                 rule_names_list = list(NaturalToJsonParser.ruleNames)
-                parsetree_lisp_s = Trees.toStringTree(tree, recog=parser, ruleNames=rule_names_list)
+                parsetree_lisp_s = Trees.toStringTree(tree, recog=parser, rule_names=rule_names_list)
                 # Only create a meaningful string if the tree has actual content beyond just EOF
                 if tree.getChildCount() > 1 or (tree.getChildCount() == 1 and tree.getChild(0).getSymbol().type != Token.EOF):
                      parsetree_lisp_string_output = (
@@ -664,7 +762,8 @@ def analyze_and_transform(source_name, input_content):
         "errores_lexicos": error_listener.lexer_errors,
         "errores_sintacticos": error_listener.parser_errors,
         "errores_semanticos": error_listener.semantic_errors, # NUEVO
-        "symbols_debug": symbols_debug_info # NUEVO: Para tests de tipos
+        "symbols_debug": symbols_debug_info, # NUEVO: Para tests de tipos
+        "ir": ir_output # NUEVO: Unidad 2
     }
 
     return json_output_string, tokens_string_output, parsetree_lisp_string_output, parsetree_qt_model, error_summary_output, stats
