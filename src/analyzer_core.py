@@ -79,6 +79,33 @@ class SymbolTable:
         entry = SymbolEntry(nombre, tipo_entidad, linea, columna, metadatos)
         self.symbols[nombre] = entry
         return True
+    
+    def get_debug_info(self):
+        """
+        Retorna una representación simplificada de la tabla de símbolos para depuración/tests.
+        """
+        debug_info = {}
+        for name, entry in self.symbols.items():
+            debug_info[name] = {
+                "tipo_entidad": entry.tipo_entidad,
+                "metadatos": entry.metadatos
+            }
+        return debug_info
+
+# --- Helpers ---
+
+def get_value_type(ctx:NaturalToJsonParser.ValorContext):
+    """
+    Determina el tipo lógico de un valor dado su contexto de parseo.
+    Retorna: "STRING", "NUMBER", "BOOLEAN" o "UNKNOWN".
+    """
+    if ctx.STRING():
+        return "STRING"
+    elif ctx.NUMERO_ENTERO() or ctx.NUMERO_DECIMAL():
+        return "NUMBER"
+    elif ctx.KW_VERDADERO() or ctx.KW_FALSO():
+        return "BOOLEAN"
+    return "UNKNOWN"
 
 # --- Listeners ---
 
@@ -216,10 +243,12 @@ class SemanticAnalyzer(NaturalToJsonListener):
     """
     Listener de ANTLR para el análisis semántico.
     Verifica reglas como unicidad de nombres y uso de palabras reservadas.
+    También recolecta metadatos de tipos.
     """
     def __init__(self, error_listener, symbol_table):
         self.error_listener = error_listener
         self.symbol_table = symbol_table
+        self.current_symbol_name = None # Para saber a qué símbolo asociar propiedades/elementos
 
     def enterCrear_objeto_cmd(self, ctx:NaturalToJsonParser.Crear_objeto_cmdContext):
         nombre = ctx.nombre_obj.text
@@ -232,16 +261,37 @@ class SemanticAnalyzer(NaturalToJsonListener):
                 linea, columna, 
                 f"El nombre '{nombre}' es una palabra reservada del lenguaje y no puede usarse como identificador."
             )
-            return # No intentamos declararlo si es inválido
+            self.current_symbol_name = None
+            return
 
         # SEM001: Verificar redefinición
-        exito = self.symbol_table.declare(nombre, "objeto", linea, columna)
+        # Inicializamos metadatos con estructura para propiedades
+        metadatos = {"propiedades": {}}
+        exito = self.symbol_table.declare(nombre, "objeto", linea, columna, metadatos)
+        
         if not exito:
             entry_prev = self.symbol_table.lookup(nombre)
             self.error_listener.add_semantic_error(
                 linea, columna,
                 f"Redefinición del símbolo '{nombre}'. Ya fue declarado como '{entry_prev.tipo_entidad}' en la línea {entry_prev.linea}."
             )
+            self.current_symbol_name = None
+        else:
+            self.current_symbol_name = nombre
+
+    def exitCrear_objeto_cmd(self, ctx:NaturalToJsonParser.Crear_objeto_cmdContext):
+        self.current_symbol_name = None
+
+    def enterPropiedad(self, ctx:NaturalToJsonParser.PropiedadContext):
+        if self.current_symbol_name:
+            clave = ctx.clave.text
+            valor_ctx = ctx.valor()
+            tipo_valor = get_value_type(valor_ctx)
+            
+            # Guardar tipo en metadatos del símbolo actual
+            entry = self.symbol_table.lookup(self.current_symbol_name)
+            if entry and entry.tipo_entidad == "objeto":
+                entry.metadatos["propiedades"][clave] = tipo_valor
 
     def enterCrear_lista_cmd(self, ctx:NaturalToJsonParser.Crear_lista_cmdContext):
         nombre = ctx.nombre_lista.text
@@ -254,16 +304,36 @@ class SemanticAnalyzer(NaturalToJsonListener):
                 linea, columna, 
                 f"El nombre '{nombre}' es una palabra reservada del lenguaje y no puede usarse como identificador."
             )
+            self.current_symbol_name = None
             return
 
         # SEM001: Verificar redefinición
-        exito = self.symbol_table.declare(nombre, "lista", linea, columna)
+        # Inicializamos metadatos con estructura para elementos
+        metadatos = {"tipos_elementos": []}
+        exito = self.symbol_table.declare(nombre, "lista", linea, columna, metadatos)
+        
         if not exito:
             entry_prev = self.symbol_table.lookup(nombre)
             self.error_listener.add_semantic_error(
                 linea, columna,
                 f"Redefinición del símbolo '{nombre}'. Ya fue declarado como '{entry_prev.tipo_entidad}' en la línea {entry_prev.linea}."
             )
+            self.current_symbol_name = None
+        else:
+            self.current_symbol_name = nombre
+
+    def exitCrear_lista_cmd(self, ctx:NaturalToJsonParser.Crear_lista_cmdContext):
+        self.current_symbol_name = None
+
+    def enterValor(self, ctx:NaturalToJsonParser.ValorContext):
+        # Solo nos interesa si estamos dentro de una lista (para objetos lo manejamos en enterPropiedad)
+        if self.current_symbol_name:
+            entry = self.symbol_table.lookup(self.current_symbol_name)
+            if entry and entry.tipo_entidad == "lista":
+                # Verificar si el padre es items_lista para confirmar que es un elemento de lista
+                # (aunque la estructura de la gramática lo garantiza si estamos en enterValor dentro de Crear_lista_cmd)
+                 tipo_valor = get_value_type(ctx)
+                 entry.metadatos["tipos_elementos"].append(tipo_valor)
 
 
 # --- Listener para Construir JSON ---
@@ -539,6 +609,7 @@ def analyze_and_transform(source_name, input_content):
     parsetree_lisp_string_output = None # Para LISP style tree
     json_output_string = None
     num_comandos = 0
+    symbols_debug_info = {} # Información de depuración de la tabla de símbolos
     
     # 1. Verificar errores léxicos y sintácticos
     if error_listener.get_total_errors() == 0 and tree:
@@ -547,6 +618,9 @@ def analyze_and_transform(source_name, input_content):
         semantic_analyzer = SemanticAnalyzer(error_listener, symbol_table)
         walker = ParseTreeWalker()
         walker.walk(semantic_analyzer, tree)
+        
+        # Capturar información de depuración de la tabla de símbolos
+        symbols_debug_info = symbol_table.get_debug_info()
 
         # 3. Generación de JSON (Solo si no hay errores semánticos)
         if error_listener.semantic_errors == 0:
@@ -589,7 +663,8 @@ def analyze_and_transform(source_name, input_content):
         "tokens_al_parser": parser_tokens_count,
         "errores_lexicos": error_listener.lexer_errors,
         "errores_sintacticos": error_listener.parser_errors,
-        "errores_semanticos": error_listener.semantic_errors # NUEVO
+        "errores_semanticos": error_listener.semantic_errors, # NUEVO
+        "symbols_debug": symbols_debug_info # NUEVO: Para tests de tipos
     }
 
     return json_output_string, tokens_string_output, parsetree_lisp_string_output, parsetree_qt_model, error_summary_output, stats

@@ -148,9 +148,12 @@ para comenzar la **Unidad 1: Análisis Semántico**.
     - **SEM001 (Redefinición)**: Verificado exitosamente (bloquea JSON).
     - **SEM002 (Palabras Reservadas)**: Verificado que el uso de palabras clave como identificadores bloquea la generación de JSON (aunque actualmente es detectado como error sintáctico por la precedencia del parser).
 - [x] Se añadieron 4 archivos de prueba inválidos en `examples/invalid/` cubriendo estos casos.
+- [x] **NUEVO (Paso 2)**: Se implementó la infraestructura de tipos.
+    - Se identifican tipos `STRING`, `NUMBER`, `BOOLEAN`.
+    - Se almacenan metadatos de tipos en la Tabla de Símbolos.
+    - Se verificó con `tests/test_types.py` que la información se registra correctamente.
 
 ### Siguientes Pasos
-- **Paso 2:** Implementar Chequeo de Tipos (Unit 1, Step 2).
 - **Paso 3:** Validaciones avanzadas (opcional).
 A partir de este punto, cualquier cambio en el compilador deberá mantener
 `python tests/test_basic.py` en estado `OK` para asegurar que no se rompa la
