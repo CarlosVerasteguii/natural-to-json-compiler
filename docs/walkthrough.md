@@ -123,8 +123,32 @@ python src/main_cli.py
 ## Siguientes pasos
 
 Con esta migración completada y protegida por pruebas, el proyecto está listo
-para comenzar la **Unidad 1: Análisis Semántico**.  
+para comenzar la **Unidad 1: Análisis Semántico**.
+
+## Estado Actual (Unidad 1: Análisis Semántico)
+
+### Cambios Realizados
+1.  **Tabla de Símbolos:**
+    *   Se implementaron las clases `SymbolEntry` y `SymbolTable` en `src/analyzer_core.py`.
+    *   Se soporta la declaración de objetos y listas en un ámbito global.
+
+2.  **Detección de Errores Semánticos:**
+    *   Se implementó el listener `SemanticAnalyzer`.
+    *   **SEM001 (Redefinición):** Se detecta si un símbolo se declara más de una vez.
+    *   **SEM002 (Palabras Reservadas):** Se detecta si se intenta usar una palabra clave como identificador (cuando no es capturado por el parser).
+    *   Se integró el conteo de errores semánticos en `CustomErrorListener` y en las estadísticas finales.
+
+3.  **Integración:**
+    *   El análisis semántico se ejecuta automáticamente después del análisis sintáctico exitoso.
+    *   Si se detectan errores semánticos, **se bloquea la generación de JSON**.
+
+### Verificación
+- [x] `python tests/test_basic.py` sigue pasando (sin regresiones).
+- [x] Pruebas manuales confirmaron que la redefinición de símbolos bloquea la salida JSON y reporta el error correctamente.
+
+### Siguientes Pasos
+- **Paso 2:** Implementar Chequeo de Tipos (Unit 1, Step 2).
+- **Paso 3:** Validaciones avanzadas (opcional).
 A partir de este punto, cualquier cambio en el compilador deberá mantener
 `python tests/test_basic.py` en estado `OK` para asegurar que no se rompa la
 funcionalidad de análisis léxico/sintáctico ni la generación actual de JSON.
-

@@ -33,12 +33,62 @@ from NaturalToJsonLexer import NaturalToJsonLexer
 from NaturalToJsonParser import NaturalToJsonParser
 from NaturalToJsonListener import NaturalToJsonListener
 
+# --- Estructuras de Datos para Análisis Semántico ---
+
+class SymbolEntry:
+    """
+    Representa una entrada en la tabla de símbolos.
+    Almacena información sobre una entidad declarada (objeto o lista).
+    """
+    def __init__(self, nombre, tipo_entidad, linea, columna, metadatos=None):
+        self.nombre = nombre
+        self.tipo_entidad = tipo_entidad  # "objeto" o "lista"
+        self.linea = linea
+        self.columna = columna
+        self.metadatos = metadatos or {}
+
+class SymbolTable:
+    """
+    Gestiona la tabla de símbolos global.
+    Permite declarar símbolos y verificar si existen o si son palabras reservadas.
+    """
+    def __init__(self):
+        self.symbols = {}
+        # Palabras reservadas del lenguaje (insensibles a mayúsculas/minúsculas)
+        self.reserved_words = {
+            "CREAR", "OBJETO", "LISTA", "CON", "ELEMENTOS", "VERDADERO", "FALSO"
+        }
+
+    def is_reserved(self, nombre):
+        """Verifica si un nombre es una palabra reservada."""
+        return nombre.upper() in self.reserved_words
+
+    def lookup(self, nombre):
+        """Busca un símbolo por nombre. Retorna SymbolEntry o None."""
+        return self.symbols.get(nombre)
+
+    def declare(self, nombre, tipo_entidad, linea, columna, metadatos=None):
+        """
+        Intenta declarar un nuevo símbolo.
+        Retorna True si se declaró exitosamente.
+        Retorna False si el símbolo ya existe (redefinición).
+        """
+        if nombre in self.symbols:
+            return False
+        
+        entry = SymbolEntry(nombre, tipo_entidad, linea, columna, metadatos)
+        self.symbols[nombre] = entry
+        return True
+
+# --- Listeners ---
+
 class CustomErrorListener(ErrorListener):
     """
     Listener de errores personalizado para ANTLR.
 
     Captura errores léxicos y sintácticos, los traduce a mensajes más
     amigables en español y los almacena para su posterior visualización.
+    Ahora también soporta errores semánticos.
     """
     def __init__(self, source_name="<input>"):
         """
@@ -54,6 +104,7 @@ class CustomErrorListener(ErrorListener):
         self.source_name = source_name
         self._lexer_errors = 0
         self._parser_errors = 0
+        self._semantic_errors = 0 # Contador de errores semánticos
         self.error_messages = []
 
     @property
@@ -64,6 +115,18 @@ class CustomErrorListener(ErrorListener):
     def parser_errors(self):
         """Retorna el número de errores sintácticos detectados."""
         return self._parser_errors
+    @property
+    def semantic_errors(self):
+        """Retorna el número de errores semánticos detectados."""
+        return self._semantic_errors
+
+    def add_semantic_error(self, line, column, message):
+        """
+        Registra un error semántico manualmente.
+        """
+        self._semantic_errors += 1
+        final_error_message = f"Error Semántico en '{self.source_name}' (Línea {line}:Columna {column}): {message}"
+        self.error_messages.append(final_error_message)
 
     def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
         """
@@ -130,8 +193,8 @@ class CustomErrorListener(ErrorListener):
         self.error_messages.append(final_error_message)
 
     def get_total_errors(self):
-        """Retorna el número total de errores (léxicos + sintácticos)."""
-        return self._lexer_errors + self._parser_errors
+        """Retorna el número total de errores (léxicos + sintácticos + semánticos)."""
+        return self._lexer_errors + self._parser_errors + self._semantic_errors
 
     def get_error_summary_string(self):
         """
@@ -148,6 +211,60 @@ class CustomErrorListener(ErrorListener):
         summary += "╚═════════════════════════════════════╝\n"
         summary += "\n".join([f"  ⚠️  {emsg}" for emsg in self.error_messages])
         return summary
+
+class SemanticAnalyzer(NaturalToJsonListener):
+    """
+    Listener de ANTLR para el análisis semántico.
+    Verifica reglas como unicidad de nombres y uso de palabras reservadas.
+    """
+    def __init__(self, error_listener, symbol_table):
+        self.error_listener = error_listener
+        self.symbol_table = symbol_table
+
+    def enterCrear_objeto_cmd(self, ctx:NaturalToJsonParser.Crear_objeto_cmdContext):
+        nombre = ctx.nombre_obj.text
+        linea = ctx.start.line
+        columna = ctx.start.column + 1
+
+        # SEM002: Verificar palabra reservada
+        if self.symbol_table.is_reserved(nombre):
+            self.error_listener.add_semantic_error(
+                linea, columna, 
+                f"El nombre '{nombre}' es una palabra reservada del lenguaje y no puede usarse como identificador."
+            )
+            return # No intentamos declararlo si es inválido
+
+        # SEM001: Verificar redefinición
+        exito = self.symbol_table.declare(nombre, "objeto", linea, columna)
+        if not exito:
+            entry_prev = self.symbol_table.lookup(nombre)
+            self.error_listener.add_semantic_error(
+                linea, columna,
+                f"Redefinición del símbolo '{nombre}'. Ya fue declarado como '{entry_prev.tipo_entidad}' en la línea {entry_prev.linea}."
+            )
+
+    def enterCrear_lista_cmd(self, ctx:NaturalToJsonParser.Crear_lista_cmdContext):
+        nombre = ctx.nombre_lista.text
+        linea = ctx.start.line
+        columna = ctx.start.column + 1
+
+        # SEM002: Verificar palabra reservada
+        if self.symbol_table.is_reserved(nombre):
+            self.error_listener.add_semantic_error(
+                linea, columna, 
+                f"El nombre '{nombre}' es una palabra reservada del lenguaje y no puede usarse como identificador."
+            )
+            return
+
+        # SEM001: Verificar redefinición
+        exito = self.symbol_table.declare(nombre, "lista", linea, columna)
+        if not exito:
+            entry_prev = self.symbol_table.lookup(nombre)
+            self.error_listener.add_semantic_error(
+                linea, columna,
+                f"Redefinición del símbolo '{nombre}'. Ya fue declarado como '{entry_prev.tipo_entidad}' en la línea {entry_prev.linea}."
+            )
+
 
 # --- Listener para Construir JSON ---
 class JsonBuilderListener(NaturalToJsonListener):
@@ -423,32 +540,40 @@ def analyze_and_transform(source_name, input_content):
     json_output_string = None
     num_comandos = 0
     
-    if error_listener.get_total_errors() == 0 and tree: # Solo procesar si no hay errores fundamentales
-        # Construir el modelo para QTreeView
-        model_builder = ParseTreeModelBuilder(list(NaturalToJsonParser.ruleNames))
+    # 1. Verificar errores léxicos y sintácticos
+    if error_listener.get_total_errors() == 0 and tree:
+        # 2. Análisis Semántico (NUEVO)
+        symbol_table = SymbolTable()
+        semantic_analyzer = SemanticAnalyzer(error_listener, symbol_table)
         walker = ParseTreeWalker()
-        walker.walk(model_builder, tree)
-        parsetree_qt_model = model_builder.get_model()
-        
-        # Construir JSON
-        json_builder = JsonBuilderListener()
-        walker.walk(json_builder, tree) # Reutilizar el ParseTreeWalker
-        json_output_string = json_builder.get_final_json_string()
-        num_comandos = len(json_builder.result_data)
+        walker.walk(semantic_analyzer, tree)
 
-        # Generar representación textual del árbol (estilo LISP)
-        try:
-            rule_names_list = list(NaturalToJsonParser.ruleNames)
-            parsetree_lisp_s = Trees.toStringTree(tree, recog=parser, ruleNames=rule_names_list)
-            # Only create a meaningful string if the tree has actual content beyond just EOF
-            if tree.getChildCount() > 1 or (tree.getChildCount() == 1 and tree.getChild(0).getSymbol().type != Token.EOF):
-                 parsetree_lisp_string_output = (
-                    "--- Árbol de Parseo (Estilo LISP) ---\n"
-                    f"{parsetree_lisp_s}\n"
-                    "---------------------------------------\n"
-                )
-        except Exception as e_tree:
-            parsetree_lisp_string_output = f"Advertencia: No se pudo generar la representación textual del árbol: {e_tree}"
+        # 3. Generación de JSON (Solo si no hay errores semánticos)
+        if error_listener.semantic_errors == 0:
+            # Construir el modelo para QTreeView
+            model_builder = ParseTreeModelBuilder(list(NaturalToJsonParser.ruleNames))
+            walker.walk(model_builder, tree)
+            parsetree_qt_model = model_builder.get_model()
+            
+            # Construir JSON
+            json_builder = JsonBuilderListener()
+            walker.walk(json_builder, tree) # Reutilizar el ParseTreeWalker
+            json_output_string = json_builder.get_final_json_string()
+            num_comandos = len(json_builder.result_data)
+
+            # Generar representación textual del árbol (estilo LISP)
+            try:
+                rule_names_list = list(NaturalToJsonParser.ruleNames)
+                parsetree_lisp_s = Trees.toStringTree(tree, recog=parser, ruleNames=rule_names_list)
+                # Only create a meaningful string if the tree has actual content beyond just EOF
+                if tree.getChildCount() > 1 or (tree.getChildCount() == 1 and tree.getChild(0).getSymbol().type != Token.EOF):
+                     parsetree_lisp_string_output = (
+                        "--- Árbol de Parseo (Estilo LISP) ---\n"
+                        f"{parsetree_lisp_s}\n"
+                        "---------------------------------------\n"
+                    )
+            except Exception as e_tree:
+                parsetree_lisp_string_output = f"Advertencia: No se pudo generar la representación textual del árbol: {e_tree}"
     
     # Recopilación de resultados y estadísticas
     error_summary_output = error_listener.get_error_summary_string()
@@ -463,7 +588,8 @@ def analyze_and_transform(source_name, input_content):
         "comandos_procesados": num_comandos,
         "tokens_al_parser": parser_tokens_count,
         "errores_lexicos": error_listener.lexer_errors,
-        "errores_sintacticos": error_listener.parser_errors
+        "errores_sintacticos": error_listener.parser_errors,
+        "errores_semanticos": error_listener.semantic_errors # NUEVO
     }
 
     return json_output_string, tokens_string_output, parsetree_lisp_string_output, parsetree_qt_model, error_summary_output, stats
