@@ -85,23 +85,6 @@ El script `tests/test_basic.py` realiza las siguientes verificaciones:
 2.  **Casos Inválidos:** Procesa los archivos de `examples/invalid/` y asegura que el analizador reporte errores.
 
 > **Nota:** La carpeta `src/ejemplos_entrada/` se mantiene por compatibilidad histórica, pero la fuente oficial para pruebas y desarrollo es `examples/`.
-
-## Roadmap (Próximos Pasos)
-
-- [ ] **Unidad 1:** Análisis Semántico (Tabla de símbolos, chequeo de tipos).
-- [ ] **Unidad 2:** Generación de Código Intermedio.
-- [ ] **Unidad 3:** Generación de Código Final.
-- [ ] **Unidad 4:** Optimización.
-
-## Ejemplos de Uso
-
-El lenguaje permite crear objetos y listas con una sintaxis natural.
-
-**Entrada:**
-```text
-CREAR OBJETO libro CON titulo:"Cien años de soledad", autor:"Gabriel García Márquez"
-```
-
 **Salida JSON:**
 ```json
 {

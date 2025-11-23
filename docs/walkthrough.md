@@ -97,6 +97,11 @@ python tests/test_basic.py
 ```bash
 python src/main_gui.py
 ```
+### 5. Unidad 4: Optimización (Básica)
+Antes de generar el código final, la IR pasa por una fase de optimización (`src/optimizer.py`).
+- **Redundancia**: Se eliminan asignaciones sobrescritas (ej. `a.x=1` seguido de `a.x=2`).
+- **Agrupamiento**: Se reordenan las instrucciones para que las propiedades de un objeto aparezcan junto a su creación.
+Esto produce un código final más limpio y eficiente sin cambiar el comportamiento del programa.
 
 - En la aplicación:
   - Pulsar *"Cargar Archivo..."*.

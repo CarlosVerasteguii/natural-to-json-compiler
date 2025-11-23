@@ -32,6 +32,7 @@ if generated_dir not in sys.path:
 from NaturalToJsonLexer import NaturalToJsonLexer
 from NaturalToJsonParser import NaturalToJsonParser
 from NaturalToJsonListener import NaturalToJsonListener
+from optimizer import optimize_ir
 
 # --- Estructuras de Datos para Análisis Semántico ---
 
@@ -704,23 +705,24 @@ def analyze_and_transform(source_name, input_content):
     
     # 1. Verificar errores léxicos y sintácticos
     if error_listener.get_total_errors() == 0 and tree:
-        # 2. Análisis Semántico (NUEVO)
+        # 2. Análisis Semántico
         symbol_table = SymbolTable()
         semantic_analyzer = SemanticAnalyzer(error_listener, symbol_table)
         walker = ParseTreeWalker()
         walker.walk(semantic_analyzer, tree)
-        
+
         # Capturar información de depuración de la tabla de símbolos
         symbols_debug_info = symbol_table.get_debug_info()
 
-        # 3. Generación de IR (NUEVO - Unidad 2)
-        # Solo si no hay errores semánticos
+        # 3. Generación de IR (Unidad 2) + Optimización (Unidad 4)
         if error_listener.semantic_errors == 0:
             ir_builder = IRBuilderListener()
             walker.walk(ir_builder, tree)
             ir_output = ir_builder.get_instructions()
+            # Aplicar optimización de IR (Unidad 4)
+            ir_output = optimize_ir(ir_output)
 
-        # 4. Generación de JSON (Solo si no hay errores semánticos)
+        # 4. Generación de JSON y estructuras del árbol (solo si no hay errores semánticos)
         if error_listener.semantic_errors == 0:
             # Construir el modelo para QTreeView
             model_builder = ParseTreeModelBuilder(list(NaturalToJsonParser.ruleNames))
@@ -739,13 +741,15 @@ def analyze_and_transform(source_name, input_content):
                 parsetree_lisp_s = Trees.toStringTree(tree, recog=parser, rule_names=rule_names_list)
                 # Only create a meaningful string if the tree has actual content beyond just EOF
                 if tree.getChildCount() > 1 or (tree.getChildCount() == 1 and tree.getChild(0).getSymbol().type != Token.EOF):
-                     parsetree_lisp_string_output = (
+                    parsetree_lisp_string_output = (
                         "--- Árbol de Parseo (Estilo LISP) ---\n"
                         f"{parsetree_lisp_s}\n"
                         "---------------------------------------\n"
                     )
             except Exception as e_tree:
-                parsetree_lisp_string_output = f"Advertencia: No se pudo generar la representación textual del árbol: {e_tree}"
+                parsetree_lisp_string_output = (
+                    f"Advertencia: No se pudo generar la representación textual del árbol: {e_tree}"
+                )
     
     # Recopilación de resultados y estadísticas
     error_summary_output = error_listener.get_error_summary_string()
