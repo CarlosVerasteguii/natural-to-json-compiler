@@ -1,0 +1,1 @@
+CREAR OBJETO usuario CON edad:"veinte"

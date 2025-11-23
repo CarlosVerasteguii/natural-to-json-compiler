@@ -289,10 +289,32 @@ class SemanticAnalyzer(NaturalToJsonListener):
             valor_ctx = ctx.valor()
             tipo_valor = get_value_type(valor_ctx)
             
+            # SEM005: Regla de Dominio (Propiedades especiales)
+            if clave == "edad" and tipo_valor != "NUMBER":
+                self.error_listener.add_semantic_error(
+                    ctx.start.line, ctx.start.column + 1,
+                    f"La propiedad 'edad' debe ser de tipo NUMBER, pero se recibió {tipo_valor}."
+                )
+            elif clave == "activo" and tipo_valor != "BOOLEAN":
+                self.error_listener.add_semantic_error(
+                    ctx.start.line, ctx.start.column + 1,
+                    f"La propiedad 'activo' debe ser de tipo BOOLEAN, pero se recibió {tipo_valor}."
+                )
+
             # Guardar tipo en metadatos del símbolo actual
             entry = self.symbol_table.lookup(self.current_symbol_name)
             if entry and entry.tipo_entidad == "objeto":
-                entry.metadatos["propiedades"][clave] = tipo_valor
+                # SEM006: Regla de Consistencia (Mismo objeto, misma propiedad, distinto tipo)
+                if clave in entry.metadatos["propiedades"]:
+                    tipo_previo = entry.metadatos["propiedades"][clave]
+                    if tipo_previo != tipo_valor:
+                        self.error_listener.add_semantic_error(
+                            ctx.start.line, ctx.start.column + 1,
+                            f"La propiedad '{clave}' ya fue definida con tipo {tipo_previo}, no puede redefinirse con tipo {tipo_valor}."
+                        )
+                else:
+                    # Solo registramos el tipo si es la primera vez (o si coincide)
+                    entry.metadatos["propiedades"][clave] = tipo_valor
 
     def enterCrear_lista_cmd(self, ctx:NaturalToJsonParser.Crear_lista_cmdContext):
         nombre = ctx.nombre_lista.text

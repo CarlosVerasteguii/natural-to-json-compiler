@@ -383,6 +383,44 @@ La lista 'vacia' debe tener al menos un elemento. No se permiten listas vacías.
 
 ---
 
+### 5.5. Error: Tipo Incorrecto en Propiedad Especial
+**Código de error**: `SEM005`
+
+**Descripción**: Se asigna un valor de tipo incorrecto a una propiedad con dominio restringido.
+- `edad`: Debe ser `NUMBER`.
+- `activo`: Debe ser `BOOLEAN`.
+
+**Ejemplo:**
+```
+CREAR OBJETO usuario CON edad:"veinte"  // ERROR SEM005
+```
+
+**Mensaje de error:**
+```
+Error Semántico en '<archivo>' (Línea 1:Columna 26):
+La propiedad 'edad' debe ser de tipo NUMBER, pero se recibió STRING.
+```
+
+---
+
+### 5.6. Error: Inconsistencia de Tipos en Propiedad
+**Código de error**: `SEM006`
+
+**Descripción**: Se define la misma propiedad más de una vez para el mismo objeto con tipos diferentes (dentro de una declaración válida).
+
+**Ejemplo:**
+```
+CREAR OBJETO usuario CON edad:30, edad:"treinta"  // ERROR SEM006
+```
+
+**Mensaje de error:**
+```
+Error Semántico en '<archivo>' (Línea 1:Columna 35):
+La propiedad 'edad' ya fue definida con tipo NUMBER, no puede redefinirse con tipo STRING.
+```
+
+---
+
 ### 5.5. Resumen de Errores Implementados
 
 Para la Unidad 1, se implementarán **obligatoriamente**:
@@ -393,6 +431,8 @@ Para la Unidad 1, se implementarán **obligatoriamente**:
 | SEM002 | Uso de palabra reservada       | Alta      |
 | SEM003 | Objeto vacío (sin propiedades) | Opcional  |
 | SEM004 | Lista vacía (sin elementos)    | Opcional  |
+| SEM005 | Tipo incorrecto (prop. especial)| Alta      |
+| SEM006 | Inconsistencia de tipos        | Alta      |
 
 ---
 
